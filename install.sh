@@ -109,8 +109,8 @@ PREV_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 echo "PREV_PATH is $PREV_PATH"
 
 # install dependencies
-apt-get update
-apt-get install -y build-essential git cmake g++ curl make jq
+apt update
+apt install -y build-essential git cmake g++ curl make jq
 
 # add User and enter his home
 useradd -m $USER
