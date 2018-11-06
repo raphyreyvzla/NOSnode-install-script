@@ -146,6 +146,7 @@ RPC_PORT="$( cat /home/$USER/$DATA_DIR/config.json | jq -r .rpc.port )"
 cp "$PREV_PATH/rai_node.service" "/etc/systemd/system/$BUILD_TARGET.service"
 sed -i "s^\$USER^$USER^g" "/etc/systemd/system/$BUILD_TARGET.service"
 sed -i "s^\$DATA_DIR^$DATA_DIR^" "/etc/systemd/system/$BUILD_TARGET.service"
+sed -i "s^\$BUILD_TARGET^$BUILD_TARGET^" "/etc/systemd/system/$BUILD_TARGET.service"
 systemctl daemon-reload
 systemctl enable $BUILD_TARGET
 
