@@ -45,21 +45,28 @@ key="$1"
 case $key in
     -n|--network)
       NETWORK="$2"
-      shift # past argument
-      shift # past value
+      shift
+      shift
       ;;
     -b|--branch)
       BRANCH="$2"
-      shift # past argument
-      shift # past value
+      shift
+      shift
       ;;
     -t|--threads)
       THREADS="$2"
+      shift
+      shift
+      ;;
+    -u|--user)
+      USER="$2"
+      shift
+      shift
       ;;
     *)    # unknown option
       echo "Unknown option $1"
       usage
-      shift # past argument
+      shift
       ;;
 esac
 done
