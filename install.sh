@@ -82,12 +82,15 @@ fi
 case $NETWORK in
     NOS)
       NODE_REPO="https://github.com/NOS-cash/NOSnode.git"
+      BUILD_TARGET="rai_node"
       ;;
     BANANO)
       NODE_REPO="https://github.com/BananoCoin/banano"
+      BUILD_TARGET="bananode"
       ;;
     NANO)
       NODE_REPO="https://github.com/nanocurrency/raiblocks.git"
+      BUILD_TARGET="rai_node"
       ;;
     *) # unknown network
       echo "Unknown network: $NETWORK"
@@ -126,13 +129,12 @@ cd /home/$USER
 git clone --recursive -b $BRANCH $NODE_REPO node_build
 cd node_build
 cmake -DBOOST_ROOT=../[boost]/ -G "Unix Makefiles"   
-make -j$THREADS rai_node
-./rai_node --diagnostics
+make -j$THREADS $BUILD_TARGET
 
-cp ./rai_node /home/$USER/
-su - $USER -c "./rai_node --daemon --data_path /home/$USER/$DATA_DIR &"
+cp ./$BUILD_TARGET /home/$USER/
+su - $USER -c "./$BUILD_TARGET --daemon --data_path /home/$USER/$DATA_DIR &"
 sleep 5
-pkill -f "rai_node"
+pkill -f "$BUILD_TARGET"
 
 # uncomment if you want to enable RPC
 # TODO: make it an ARG option
@@ -141,16 +143,16 @@ pkill -f "rai_node"
 
 RPC_PORT="$( cat /home/$USER/$DATA_DIR/config.json | jq -r .rpc.port )"
 
-cp "$PREV_PATH/rai_node.service" /etc/systemd/system/rai_node.service
-sed -i "s^\$USER^$USER^g" /etc/systemd/system/rai_node.service
-sed -i "s^\$DATA_DIR^$DATA_DIR^" /etc/systemd/system/rai_node.service
+cp "$PREV_PATH/rai_node.service" "/etc/systemd/system/$BUILD_TARGET.service"
+sed -i "s^\$USER^$USER^g" "/etc/systemd/system/$BUILD_TARGET.service"
+sed -i "s^\$DATA_DIR^$DATA_DIR^" "/etc/systemd/system/$BUILD_TARGET.service"
 systemctl daemon-reload
-systemctl enable rai_node
+systemctl enable $BUILD_TARGET
 
 # Fix permissions
 chown -R $USER:$USER /home/$USER
-service rai_node start
-service rai_node status
+service $BUILD_TARGET start
+service $BUILD_TARGET status
 
 # configure NodeWatchdog
 cd /home/$USER/
