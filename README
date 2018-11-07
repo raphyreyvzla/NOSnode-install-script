@@ -1,0 +1,5 @@
+This install script downloads the latest source of a given branch for a given network (NOS|BANANO|NANO), compiles it and installs it for a specified user. If the specified user does not exist,it will be created.
+
+Additionally a node watchdog will be installed, which checks every minute if the node is working correctly and restarts it if its not the case.
+
+To check the usage just run './install.sh' it will show all supported ARGs and an example how to run it.
