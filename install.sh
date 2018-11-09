@@ -141,6 +141,7 @@ pkill -f "$BUILD_TARGET"
 # sed -i 's/"rpc_enable": "false",/"rpc_enable": "true",/' /home/$USER/$DATA_DIR/config.json
 # sed -i 's/"enable_control": "false",/"enable_control": "true",/' /home/$USER/$DATA_DIR/config.json
 
+RPC_HOST="$( cat /home/$USER/$DATA_DIR/config.json | jq -r .rpc.address )"
 RPC_PORT="$( cat /home/$USER/$DATA_DIR/config.json | jq -r .rpc.port )"
 
 cp "$PREV_PATH/rai_node.service" "/etc/systemd/system/$BUILD_TARGET.service"
@@ -158,11 +159,10 @@ service $BUILD_TARGET status
 # configure NodeWatchdog
 cd /home/$USER/
 git clone https://github.com/NOS-Cash/NodeWatchdog.git /home/$USER/NodeWatchdog
-sed -i "s^NODE_RPC_PORT=\"7131\"^NODE_RPC_PORT=\"$RPC_PORT\"^" /home/$USER/NodeWatchdog/nodewatchdog.sh
 
 # add Nodewatchdog a cronjob
 crontab -l > /tmp/current_cron
-echo "* * * * * /home/$USER/NodeWatchdog/nodewatchdog.sh" >> /tmp/current_cron
+echo "* * * * * /home/$USER/NodeWatchdog/nodewatchdog.sh $BUILD_TARGET $RPC_HOST $RPC_PORT" >> /tmp/current_cron
 crontab /tmp/current_cron
 rm /tmp/current_cron
 
