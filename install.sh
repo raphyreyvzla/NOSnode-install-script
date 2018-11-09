@@ -6,12 +6,13 @@
 
 usage ()
 {
-    echo "Usage: $0 -n|--network NETWORK [-b|--branch BRANCH] [-t|--threads THREADS] [-u|--user USERNAME]"
+    echo "Usage: $0 -n|--network NETWORK [-b|--branch BRANCH] [-t|--threads THREADS] [-u|--user USERNAME] [-w]"
 
     echo "NETWORK=NOS|BANANO|NANO"
     echo "BRANCH (optional): default is master, specify a different one if needed"
     echo "THREADS (optional): default is 1, adjust this to your machones cores"
     echo "USER (optional): default is "nos", put the user here under which the node will run. User will be create if it does not exist."
+    echo "-w (optional) : if specified the nodewatchdog will be installed. For this RPC will be enabled on the node"
     echo ""
     echo "EXAMPLE: $0 -n NOS -b usd-network -t 3 -u nodeuser"
 
@@ -32,6 +33,7 @@ NETWORK="NONE"
 BRANCH="master"
 THREADS="1"
 USER="nos"
+WATCHDOG="FALSE"
 
 if (( $# < 2 )); then
   usage
@@ -60,6 +62,11 @@ case $key in
       ;;
     -u|--user)
       USER="$2"
+      shift
+      shift
+      ;;
+    -w)
+      WATCHDOG="TRUE"
       shift
       shift
       ;;
@@ -136,10 +143,10 @@ su - $USER -c "./$BUILD_TARGET --daemon --data_path /home/$USER/$DATA_DIR &"
 sleep 5
 pkill -f "$BUILD_TARGET"
 
-# uncomment if you want to enable RPC
-# TODO: make it an ARG option
-# sed -i 's/"rpc_enable": "false",/"rpc_enable": "true",/' /home/$USER/$DATA_DIR/config.json
-# sed -i 's/"enable_control": "false",/"enable_control": "true",/' /home/$USER/$DATA_DIR/config.json
+# enable RPC when the watchdog has to be installed
+if [ $WATCHDOG = "TRUE" ]; then
+  sed -i 's/"rpc_enable": "false",/"rpc_enable": "true",/' /home/$USER/$DATA_DIR/config.json
+fi
 
 RPC_PORT="$( cat /home/$USER/$DATA_DIR/config.json | jq -r .rpc.port )"
 
@@ -152,20 +159,23 @@ systemctl enable $BUILD_TARGET
 
 # Fix permissions
 chown -R $USER:$USER /home/$USER
+
+# start the node
 service $BUILD_TARGET start
 service $BUILD_TARGET status
 
-# configure NodeWatchdog
-cd /home/$USER/
-git clone https://github.com/NOS-Cash/NodeWatchdog.git /home/$USER/NodeWatchdog
-sed -i "s^NODE_RPC_PORT=\"7131\"^NODE_RPC_PORT=\"$RPC_PORT\"^" /home/$USER/NodeWatchdog/nodewatchdog.sh
+if [ $WATCHDOG = "TRUE" ]; then
+  
+  # configure NodeWatchdog
+  cd /home/$USER/
+  git clone https://github.com/NOS-Cash/NodeWatchdog.git /home/$USER/NodeWatchdog
 
-# add Nodewatchdog a cronjob
-crontab -l > /tmp/current_cron
-echo "* * * * * /home/$USER/NodeWatchdog/nodewatchdog.sh" >> /tmp/current_cron
-crontab /tmp/current_cron
-rm /tmp/current_cron
-
+  # add Nodewatchdog a cronjob
+  crontab -l > /tmp/current_cron
+  echo "* * * * * /home/$USER/NodeWatchdog/nodewatchdog.sh $BUILD_TARGET $RPC_HOST $RPC_PORT" >> /tmp/current_cron
+  crontab /tmp/current_cron
+  rm /tmp/current_cron
+fi
 
 echo "INSTALLATION COMPLETE"
 exit 0
