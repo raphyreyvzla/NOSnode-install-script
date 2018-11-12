@@ -3,7 +3,6 @@ Description=Nano node service
 After=network.target
 
 [Service]
-User=canoed
 WorkingDirectory=/home/$USER
 LimitNOFILE=65536
 ExecStart=/home/$USER/$BUILD_TARGET --daemon --data_path /home/$USER/$DATA_DIR
